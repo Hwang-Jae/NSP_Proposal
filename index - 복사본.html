@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSP (NexGen Smart Platform) 도입 기획안</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --bg-warm: #FDFCF8;
+            --primary: #4F46E5;
+            --accent-sage: #86A789;
+        }
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg-warm);
+            color: #1e293b;
+            scroll-behavior: smooth;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+
+        .step-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .active-tab {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .scenario-box {
+            min-height: 520px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        /* Scan Line Animation for OCR */
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+        .scanning-line {
+            animation: scan 2.5s infinite linear;
+        }
+
+        @keyframes flowHorizontal {
+            0% { left: 0%; opacity: 0; transform: scale(0.5); }
+            10% { opacity: 1; transform: scale(1); }
+            90% { opacity: 1; transform: scale(1); }
+            100% { left: 100%; opacity: 0; transform: scale(0.5); }
+        }
+        
+        @keyframes flowHorizontalReverse {
+            0% { right: 0%; opacity: 0; transform: scale(0.5); }
+            10% { opacity: 1; transform: scale(1); }
+            90% { opacity: 1; transform: scale(1); }
+            100% { right: 100%; opacity: 0; transform: scale(0.5); }
+        }
+
+        .flow-line-h { 
+            position: relative; 
+            height: 2px; 
+            background: repeating-linear-gradient(90deg, #334155, #334155 4px, transparent 4px, transparent 8px); 
+            display: flex;
+            align-items: center;
+        }
+
+        .packet {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        .packet-right { animation: flowHorizontal 1.5s linear infinite; }
+        .packet-left { animation: flowHorizontalReverse 1.5s linear infinite; }
+        
+        .packet-blue { background-color: #60a5fa; box-shadow: 0 0 8px #60a5fa; }
+        .packet-green { background-color: #34d399; box-shadow: 0 0 8px #34d399; }
+        .packet-purple { background-color: #c084fc; box-shadow: 0 0 8px #c084fc; }
+        .packet-red { background-color: #f87171; box-shadow: 0 0 8px #f87171; }
+        .packet-amber { background-color: #fbbf24; box-shadow: 0 0 8px #fbbf24; }
+
+        .sys-node {
+            background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px; text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Soundwave bar animation */
+        @keyframes soundWave {
+            0%, 100% { height: 10px; }
+            50% { height: 40px; }
+        }
+        .wave-bar {
+            animation: soundWave 0.8s infinite ease-in-out;
+        }
+        .wave-bar:nth-child(2) { animation-delay: 0.15s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.45s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.1s; }
+
+        /* General Fade-in */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <header class="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">N</div>
+                <h1 class="text-xl font-bold tracking-tight text-slate-800">NexGen Smart Platform</h1>
+            </div>
+            <nav class="hidden md:flex space-x-8 text-sm font-medium text-slate-500">
+                <a href="#vision" class="hover:text-indigo-600 transition">비전</a>
+                <a href="#roadmap" class="hover:text-indigo-600 transition">로드맵</a>
+                <a href="#innovation" class="hover:text-indigo-600 transition">3단계 고도화</a>
+                <a href="#impact" class="hover:text-indigo-600 transition">기대효과</a>
+                <a href="#demo" class="px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition">데모 시뮬레이터</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-12">
+        
+        <section id="vision" class="mb-24 text-center">
+            <span class="inline-block px-4 py-1.5 mb-4 text-xs font-semibold tracking-widest text-indigo-600 uppercase bg-indigo-50 rounded-full">Future manufacturing Intelligence</span>
+            <h2 class="text-4xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight">무중단 스마트 팩토리와<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-indigo-400">자율형 운영 체계의 실현</span></h2>
+            <p class="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
+                NSP는 데이터의 단절을 해결하고 비정형 현장 데이터까지 자산화하여,<br> 
+                실시간 의사결정을 지원하는 당사만의 차세대 데이터 허브 기반 플랫폼입니다.
+            </p>
+        </section>
+
+        <section id="roadmap" class="mb-32">
+            <div class="mb-12">
+                <h3 class="text-2xl font-bold text-slate-800 mb-2">3단계 점진적 고도화 로드맵</h3>
+                <p class="text-slate-500 text-sm">리스크 최소화를 위해 PoC부터 초고도화까지 단계별로 구축합니다.</p>
+            </div>
+
+            <div class="flex border-b border-slate-200 mb-8 overflow-x-auto">
+                <button onclick="switchTab('poc')" id="tab-poc" class="roadmap-tab px-6 py-4 text-sm font-medium whitespace-nowrap active-tab">PoC (개념 검증)</button>
+                <button onclick="switchTab('step1')" id="tab-step1" class="roadmap-tab px-6 py-4 text-sm font-medium whitespace-nowrap">1단계: 기반 정립</button>
+                <button onclick="switchTab('step2')" id="tab-step2" class="roadmap-tab px-6 py-4 text-sm font-medium whitespace-nowrap">2단계: 시스템 연계</button>
+                <button onclick="switchTab('step3')" id="tab-step3" class="roadmap-tab px-6 py-4 text-sm font-medium whitespace-nowrap">3단계: 초고도화</button>
+            </div>
+
+            <div id="roadmap-content" class="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-slate-100 min-h-[400px]">
+                <!-- Dynamic Content Loaded by JS -->
+            </div>
+        </section>
+
+        <section id="innovation" class="mb-32">
+            <div class="mb-12 text-center">
+                <h3 class="text-3xl font-bold text-slate-800 mb-4">3단계 핵심 혁신 아이템</h3>
+                <p class="text-slate-500">비정형/비전 데이터의 디지털 전환을 이끄는 5대 핵심 기술입니다.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="step-card bg-white p-8 rounded-3xl border border-slate-100">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 text-2xl font-bold">👁️</div>
+                    <h4 class="text-xl font-bold mb-3 text-slate-800">AI 비전 관제</h4>
+                    <p class="text-slate-600 text-sm leading-relaxed">품질 불량 미세 검출 및 작업자 안전 수칙 준수 여부를 실시간 영상 분석으로 감지합니다.</p>
+                </div>
+                <div class="step-card bg-white p-8 rounded-3xl border border-slate-100">
+                    <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-6 text-2xl font-bold">📄</div>
+                    <h4 class="text-xl font-bold mb-3 text-slate-800">스마트 OCR</h4>
+                    <p class="text-slate-600 text-sm leading-relaxed">해외 물류/통관 서류 등 비정형 문서를 스스로 분석하여 SAP 시스템에 자동 입력합니다.</p>
+                </div>
+                <div class="step-card bg-white p-8 rounded-3xl border border-slate-100">
+                    <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mb-6 text-2xl font-bold">🔊</div>
+                    <h4 class="text-xl font-bold mb-3 text-slate-800">음향 예지보전</h4>
+                    <p class="text-slate-600 text-sm leading-relaxed">센서 부착이 어려운 노후 설비의 구동 소음을 분석하여 고장을 사전에 감지합니다.</p>
+                </div>
+                <div class="step-card bg-white p-8 rounded-3xl border border-slate-100">
+                    <div class="w-12 h-12 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center mb-6 text-2xl font-bold">🎙️</div>
+                    <h4 class="text-xl font-bold mb-3 text-slate-800">음성 작업일지</h4>
+                    <p class="text-slate-600 text-sm leading-relaxed">STT 기술을 활용하여 현장의 구두 보고를 즉시 디지털 점검 이력으로 자산화합니다.</p>
+                </div>
+                <div class="step-card bg-white p-8 rounded-3xl border border-slate-100 md:col-span-2 lg:col-span-1">
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-6 text-2xl font-bold">🤖</div>
+                    <h4 class="text-xl font-bold mb-3 text-slate-800">GenAI Co-Pilot</h4>
+                    <p class="text-slate-600 text-sm leading-relaxed">엔터프라이즈 LLM이 글로벌 규제나 과거 조치 이력을 바탕으로 실시간 협업 가이드를 제공합니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="impact" class="mb-32">
+            <div class="mb-12 text-center">
+                <h3 class="text-3xl font-bold text-slate-800 mb-4">도입 기대 효과</h3>
+                <p class="text-slate-500">데이터 기반의 운영으로 정량적/정성적 성과를 달성합니다.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6">
+                    <div class="p-6 bg-indigo-50 rounded-2xl border border-indigo-100">
+                        <div class="text-indigo-600 font-bold text-2xl mb-1">50% ↓</div>
+                        <div class="text-indigo-900 font-semibold mb-1">업무 생산성 향상</div>
+                        <p class="text-indigo-700/70 text-sm">단순 반복 및 수기 데이터 입력 자동화로 주간 보고서 작성 시간 단축</p>
+                    </div>
+                    <div class="p-6 bg-emerald-50 rounded-2xl border border-emerald-100">
+                        <div class="text-emerald-600 font-bold text-2xl mb-1">10% ↑</div>
+                        <div class="text-emerald-900 font-semibold mb-1">설비 가동률(OEE) 증가</div>
+                        <p class="text-emerald-700/70 text-sm">예지보전 기반 돌발 비가동 시간 최소화 및 실시간 모니터링 강화</p>
+                    </div>
+                    <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div class="text-slate-600 font-bold text-2xl mb-1">0% 지향</div>
+                        <div class="text-slate-900 font-semibold mb-1">자재 결품률 최소화</div>
+                        <p class="text-slate-700/70 text-sm">MES-SAP-수출입 연계 분석으로 적정 재고 유지 및 자동 발주</p>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+                    <h4 class="text-center font-bold text-slate-700 mb-6">주요 KPI 향상 목표치 (도입 전 vs 도입 후)</h4>
+                    <div class="chart-container">
+                        <canvas id="kpiChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="demo" class="mb-12">
+            <div class="bg-slate-900 rounded-[2.5rem] p-6 md:p-12 text-white overflow-hidden relative">
+                <div class="relative z-10">
+                    <div class="flex justify-between items-center mb-8">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                            <span class="text-slate-300 text-sm font-mono uppercase tracking-widest font-semibold">NSP LIVE INTERACTIVE DEMO CONSOLE</span>
+                        </div>
+                        <span class="text-xs bg-indigo-600 text-white px-3 py-1 rounded-full font-mono">Ver 1.0.4 - Sandbox Active</span>
+                    </div>
+                    
+                    <!-- Dynamic Interactive Simulator Window -->
+                    <div id="scenario-viewer" class="scenario-box bg-slate-950/80 rounded-2xl border border-slate-800 p-6">
+                        <!-- Custom dynamic scenario mockups will render here via JavaScript -->
+                    </div>
+
+                    <!-- Simulator Pagination / Navigation controls -->
+                    <div class="flex justify-between items-center mt-8 pt-6 border-t border-slate-800/80">
+                        <div id="scenario-progress" class="flex space-x-2">
+                            <span class="w-8 h-1.5 rounded-full bg-indigo-500 transition-all duration-300"></span>
+                            <span class="w-8 h-1.5 rounded-full bg-slate-700 transition-all duration-300"></span>
+                            <span class="w-8 h-1.5 rounded-full bg-slate-700 transition-all duration-300"></span>
+                        </div>
+                        <div class="flex space-x-4">
+                            <button onclick="prevScenario()" class="px-5 py-2 border border-slate-700 rounded-full hover:bg-slate-800 transition text-sm">이전 Scene</button>
+                            <button onclick="nextScenario()" class="px-6 py-2 bg-indigo-600 rounded-full hover:bg-indigo-500 transition text-sm font-bold shadow-lg shadow-indigo-600/20">다음 Scene</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-50 border-t py-12">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
+            <div class="text-slate-400 text-sm mb-4 md:mb-0">
+                © 2026 NexGen Smart Platform Project Office. All rights reserved.
+            </div>
+            <div class="flex space-x-6 text-slate-400 text-xs font-medium">
+                <span>보안 등급: 사내 대외비</span>
+                <span>담당 부서:</span>
+                <span>최종 업데이트: 2026.07</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Roadmap Tab Data
+        const roadmapData = {
+            poc: {
+                title: "🏆 PoC (Proof of Concept) 단계",
+                subtitle: "구현 가능성 검증 및 리스크 최소화",
+                content: `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in">
+                        <div>
+                            <h5 class="font-bold text-slate-800 mb-4 flex items-center">
+                                <span class="w-1.5 h-6 bg-indigo-500 rounded-full mr-3"></span>검증 범위
+                            </h5>
+                            <ul class="space-y-3 text-slate-600 text-sm">
+                                <li>• 레거시 데이터(Excel, CSV) 추출 파이프라인 안정성</li>
+                                <li>• 핵심 변수 기반 초기 AI 예측 정확도 검증</li>
+                                <li>• 망분리 등 사내 보안 정책 준수 여부 및 연동 가이드</li>
+                            </ul>
+                        </div>
+                        <div class="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100">
+                            <h5 class="font-bold text-indigo-900 mb-2">목표</h5>
+                            <p class="text-indigo-800 text-sm leading-relaxed">최소 기능 제품(MVP) 구현을 통해 본 사업 전환 시 발생 가능한 기술적 리스크를 선제적으로 제거합니다.</p>
+                        </div>
+                    </div>
+                `
+            },
+            step1: {
+                title: "📅 1단계: 기반 정립",
+                subtitle: "정제된 데이터를 기반으로 한 사무 보조 및 분석",
+                content: `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+                        <div class="p-5 border border-slate-100 rounded-2xl bg-white shadow-sm">
+                            <div class="font-bold text-slate-800 mb-2 flex items-center"><span class="mr-2">📊</span>보고서 자동화</div>
+                            <p class="text-slate-500 text-xs leading-relaxed">일/주간 생산 실적을 자동 취합하여 수치 오류 없는 경영 보고서 초안 생성</p>
+                        </div>
+                        <div class="p-5 border border-slate-100 rounded-2xl bg-white shadow-sm">
+                            <div class="font-bold text-slate-800 mb-2 flex items-center"><span class="mr-2">📖</span>지식 관리(KMS)</div>
+                            <p class="text-slate-500 text-xs leading-relaxed">사내 표준 운영 절차서(SOP) 기반 지능형 가이드북 검색 및 즉각 답변 기능</p>
+                        </div>
+                        <div class="p-5 border border-slate-100 rounded-2xl bg-white shadow-sm">
+                            <div class="font-bold text-slate-800 mb-2 flex items-center"><span class="mr-2">📈</span>셀프 데이터 분석</div>
+                            <p class="text-slate-500 text-xs leading-relaxed">엑셀 드래그 업로드 시 실시간 통계 트렌드 분석 및 맞춤 차트 자동 도출</p>
+                        </div>
+                    </div>
+                `
+            },
+            step2: {
+                title: "📅 2단계: 시스템 연계",
+                subtitle: "실시간 데이터 융합 및 지능형 예측",
+                content: `
+                    <div class="space-y-6 animate-fade-in">
+                        <div class="flex flex-wrap items-center justify-between p-4 bg-slate-50 rounded-xl border">
+                            <div class="flex space-x-3 mb-2 sm:mb-0">
+                                <span class="px-2.5 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded">MES</span>
+                                <span class="px-2.5 py-1 bg-green-100 text-green-800 text-xs font-bold rounded">SAP</span>
+                                <span class="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded">수출입 시스템</span>
+                            </div>
+                            <div class="text-xs font-bold text-indigo-600">3자 데이터 허브 실시간 양방향 연계</div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div class="flex items-start space-x-3 p-3 bg-white border border-slate-100 rounded-xl">
+                                <span class="text-emerald-500 font-bold">✓</span>
+                                <span class="text-slate-600">재고 부족 확률 예측에 의거한 ERP(SAP) 구매 오더 초안 생성</span>
+                            </div>
+                            <div class="flex items-start space-x-3 p-3 bg-white border border-slate-100 rounded-xl">
+                                <span class="text-emerald-500 font-bold">✓</span>
+                                <span class="text-slate-600">PLC 모니터링 연동 설비 종합설비효율(OEE) 분석 자동 집계</span>
+                            </div>
+                            <div class="flex items-start space-x-3 p-3 bg-white border border-slate-100 rounded-xl">
+                                <span class="text-emerald-500 font-bold">✓</span>
+                                <span class="text-slate-600">핵심 설비 이상 진동/압력 감지 및 고장 예지보전 AI</span>
+                            </div>
+                            <div class="flex items-start space-x-3 p-3 bg-white border border-slate-100 rounded-xl">
+                                <span class="text-emerald-500 font-bold">✓</span>
+                                <span class="text-slate-600">글로벌 물류 병목 현황 연계 공급망 대시보드(SCM)</span>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            step3: {
+                title: "📅 3단계: 초고도화",
+                subtitle: "아날로그 데이터의 디지털 자산화 완성",
+                content: `
+                    <div class="bg-indigo-900 text-indigo-100 p-8 rounded-3xl animate-fade-in shadow-inner">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                            <div>
+                                <h5 class="text-xl font-bold mb-1 text-white flex items-center"><span class="mr-2">⚡</span>Full-Stack Smart Factory</h5>
+                                <p class="text-indigo-300 text-xs font-mono">Computer Vision | Acoustic Sound AI | LLM Co-Pilot</p>
+                            </div>
+                            <div class="mt-3 md:mt-0 text-xs bg-indigo-800 text-indigo-200 px-4 py-1.5 rounded-full border border-indigo-700 font-semibold">
+                                무중단 자율형 지능화 완성
+                            </div>
+                        </div>
+                        <div class="text-sm leading-relaxed text-indigo-200/90">
+                            기존 정형 시스템 데이터뿐만 아니라 현장의 비전(CCTV), 음향(구동 소음), 현장 보고(수기 음성) 등 현장의 모든 비정형 데이터를 실시간 수집 및 자산화하여 스스로 판단하고 실행하는 궁극의 자율 제어 모델을 확립합니다.
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        let currentScenarioIdx = 0;
+        
+        let simState = {
+            scene1: { step: 0 }, // 0: Idle, 1: Data Gathering, 2: Alert State, 3: Auto-PO Processed
+            scene2: { step: 0 }, // 0: Idle, 1: File Ingestion/OCR, 2: DB Insert, 3: Co-Pilot Query
+            scene3: { step: 0, text: "" } // 0: Monitoring, 1: Edge Anomaly, 2: STT Dictation, 3: MES DB Logged
+        };
+
+        // Switch Tabs for Roadmap
+        function switchTab(step) {
+            const content = roadmapData[step];
+            const roadmapDiv = document.getElementById('roadmap-content');
+            
+            document.querySelectorAll('.roadmap-tab').forEach(tab => tab.classList.remove('active-tab'));
+            document.getElementById(`tab-${step}`).classList.add('active-tab');
+
+            roadmapDiv.style.opacity = 0;
+            setTimeout(() => {
+                roadmapDiv.innerHTML = `
+                    <div class="mb-6">
+                        <h4 class="text-2xl font-bold text-slate-800 mb-1">${content.title}</h4>
+                        <p class="text-slate-500 font-medium text-sm">${content.subtitle}</p>
+                    </div>
+                    <div>${content.content}</div>
+                `;
+                roadmapDiv.style.opacity = 1;
+            }, 150);
+        }
+
+        function renderScene1() {
+            const container = document.getElementById('scenario-viewer');
+            const state = simState.scene1;
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in h-full">
+                    <!-- Left console panel -->
+                    <div class="lg:col-span-5 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800/80 pb-6 lg:pb-0 lg:pr-6">
+                        <div>
+                            <div class="flex items-center space-x-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                                <span>Scene 1</span><span class="text-slate-600">•</span><span>실시간 인터페이스 기반 결품 예측</span>
+                            </div>
+                            <h4 class="text-xl font-bold text-white mb-3">시스템별 실시간 데이터 수집 및 발주 예측</h4>
+                            <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                                MES, SAP, 수출입 API의 이기종 프로토콜 데이터를 중앙 데이터 허브로 연계 수집하여, 물류 지연에 따른 재고 소진 시점을 실시간 분석합니다.
+                            </p>
+                        </div>
+
+                        <!-- System Logs -->
+                        <div class="space-y-2 font-mono text-[11px] bg-slate-950 p-4 rounded-xl border border-slate-900 min-h-[140px]">
+                            <div class="flex justify-between text-slate-500 border-b border-slate-900 pb-1 mb-2">
+                                <span>INTERFACE EVENT LOG</span>
+                                <span class="text-emerald-500 flex items-center"><span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse mr-1.5"></span>LIVE</span>
+                            </div>
+                            ${state.step >= 1 ? `
+                                <div class="text-slate-300 animate-fade-in"><span class="text-blue-400">[REST API]</span> 글로벌 항만 화물선 지연(D+2) 패킷 수신</div>
+                                <div class="text-slate-300 animate-fade-in" style="animation-delay: 0.2s"><span class="text-green-400">[SAP RFC]</span> 실시간 안전재고 잔량 2,400 EA 동기화</div>
+                                <div class="text-slate-300 animate-fade-in" style="animation-delay: 0.4s"><span class="text-purple-400">[DB Link]</span> MES 주간 생산계획(1,000 EA/일) 맵핑 완료</div>
+                            ` : '<div class="text-slate-600 text-center py-4">대기 중... 시스템 인터페이스를 가동하세요.</div>'}
+                            ${state.step >= 2 ? `
+                                <div class="text-amber-400 font-semibold mt-2 border-t border-slate-800 pt-2 animate-fade-in"><span class="text-red-500">[NSP Engine]</span> 위험 도출: 3일 후 재고 소진 (OOS)</div>
+                            ` : ''}
+                            ${state.step === 3 ? `
+                                <div class="text-emerald-400 font-semibold mt-1 animate-fade-in"><span class="text-emerald-500">[SAP OData]</span> 자재 코드 MTR-98 자동 발주(PO) 전송 성공</div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Action Button -->
+                        <div class="mt-4">
+                            ${state.step === 0 ? `
+                                <button onclick="triggerScene1Step1()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition duration-200 shadow-md">
+                                    [1단계] 시스템 데이터 파이프라인 가동 (수집)
+                                </button>
+                            ` : state.step === 1 ? `
+                                <button disabled class="w-full py-3 bg-slate-800 text-slate-400 font-bold rounded-xl text-xs flex items-center justify-center space-x-2">
+                                    <svg class="animate-spin h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <span>이기종 데이터 실시간 병합 및 분석 중...</span>
+                                </button>
+                            ` : state.step === 2 ? `
+                                <button onclick="triggerScene1Step3()" class="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs transition duration-200 shadow-md animate-pulse">
+                                    [2단계] 결품 예상! SAP 대체 발주(PO) 승인 전송
+                                </button>
+                            ` : `
+                                <div class="bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-xl flex items-center space-x-3 text-xs">
+                                    <span class="text-lg">✅</span>
+                                    <div><div class="font-bold">SAP 인터페이스 연계 처리 완료</div><div class="opacity-75 font-mono text-[10px]">PO-2026-0706-004 발급</div></div>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+
+                    <!-- Right visual mock panel -->
+                    <div class="lg:col-span-7 bg-slate-900 rounded-xl border border-slate-800 p-4 flex flex-col justify-between">
+                        
+                        <!-- Top Half: Architecture Flow Diagram -->
+                        <div class="flex-1 bg-slate-950 rounded-lg border border-slate-800/80 p-4 mb-4 relative flex flex-col justify-center">
+                            <div class="text-[10px] text-slate-500 font-mono absolute top-2 left-3">DATA PIPELINE ARCHITECTURE</div>
+                            
+                            <div class="flex justify-between items-center w-full px-2 mt-4">
+                                <!-- Data Sources -->
+                                <div class="flex flex-col space-y-4 w-1/4">
+                                    <div class="sys-node relative">
+                                        <div class="text-[10px] font-bold text-blue-400 mb-0.5">External API</div>
+                                        <div class="text-[9px] text-slate-400">수출입 항만 연동</div>
+                                        <div class="absolute -right-12 top-1/2 transform -translate-y-1/2 text-[8px] text-blue-500 bg-blue-900/30 px-1 py-0.5 rounded">REST</div>
+                                    </div>
+                                    <div class="sys-node relative">
+                                        <div class="text-[10px] font-bold text-green-400 mb-0.5">SAP ERP</div>
+                                        <div class="text-[9px] text-slate-400">자재/재고 DB</div>
+                                        <div class="absolute -right-12 top-1/2 transform -translate-y-1/2 text-[8px] text-green-500 bg-green-900/30 px-1 py-0.5 rounded">RFC</div>
+                                    </div>
+                                    <div class="sys-node relative">
+                                        <div class="text-[10px] font-bold text-purple-400 mb-0.5">MES DB</div>
+                                        <div class="text-[9px] text-slate-400">생산 계획</div>
+                                        <div class="absolute -right-12 top-1/2 transform -translate-y-1/2 text-[8px] text-purple-500 bg-purple-900/30 px-1 py-0.5 rounded">DB Link</div>
+                                    </div>
+                                </div>
+
+                                <!-- Flow lines IN -->
+                                <div class="flex flex-col space-y-10 w-1/6 items-center justify-center">
+                                    <div class="w-full flow-line-h">${state.step >= 1 ? '<div class="packet packet-right packet-blue"></div>' : ''}</div>
+                                    <div class="w-full flow-line-h">${state.step >= 1 ? '<div class="packet packet-right packet-green"></div>' : ''}</div>
+                                    <div class="w-full flow-line-h">${state.step >= 1 ? '<div class="packet packet-right packet-purple"></div>' : ''}</div>
+                                </div>
+
+                                <!-- NSP HUB -->
+                                <div class="sys-node border-indigo-500/50 bg-indigo-950/30 w-1/4 shadow-lg shadow-indigo-500/10 ${state.step === 2 ? 'border-red-500 shadow-red-500/20 bg-red-950/30' : ''} transition-all duration-500">
+                                    <div class="text-xl mb-1">🧠</div>
+                                    <div class="text-[11px] font-bold text-indigo-300">NSP Data Hub</div>
+                                    <div class="text-[9px] text-slate-400 mt-1">AI Analytics Engine</div>
+                                </div>
+
+                                <!-- Flow line OUT -->
+                                <div class="flex flex-col w-1/6 items-center justify-center relative">
+                                    <div class="w-full flow-line-h">${state.step === 3 ? '<div class="packet packet-right packet-emerald"></div>' : ''}</div>
+                                    <div class="absolute -top-4 text-[8px] text-emerald-500 bg-emerald-900/30 px-1 py-0.5 rounded">OData API</div>
+                                </div>
+
+                                <!-- Target -->
+                                <div class="sys-node w-1/4 ${state.step === 3 ? 'border-emerald-500' : ''} transition-colors">
+                                    <div class="text-[10px] font-bold text-emerald-400 mb-0.5">SAP PO Module</div>
+                                    <div class="text-[9px] text-slate-400">발주서 전송 목적지</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Half: Console View -->
+                        <div class="h-1/3 bg-slate-950/80 rounded-lg p-3 border ${state.step >= 2 && state.step < 3 ? 'border-red-500/50 bg-red-950/10' : 'border-slate-800'} transition-all flex flex-col justify-center text-center">
+                            ${state.step === 0 ? `
+                                <div class="text-slate-500 text-xs">상단의 아키텍처 다이어그램에서 데이터 파이프라인 가동을 대기 중입니다.</div>
+                            ` : state.step === 1 ? `
+                                <div class="flex justify-center space-x-4 animate-fade-in">
+                                    <div class="text-[10px] text-left text-blue-400"><span class="block text-slate-500">입항 지연율</span>+2.0 Days</div>
+                                    <div class="border-l border-slate-700"></div>
+                                    <div class="text-[10px] text-left text-green-400"><span class="block text-slate-500">현재 안전재고</span>2,400 EA</div>
+                                    <div class="border-l border-slate-700"></div>
+                                    <div class="text-[10px] text-left text-purple-400"><span class="block text-slate-500">MES 사용량</span>1,000 EA/D</div>
+                                </div>
+                            ` : state.step === 2 ? `
+                                <div class="text-red-400 text-sm font-bold animate-pulse flex items-center justify-center">
+                                    <span class="mr-2 text-xl">⚠️</span> [결품 임계치 경고] 3일 후 MTR-98 자재 부족 예상!
+                                </div>
+                                <div class="text-[10px] text-slate-400 mt-1">좌측 패널에서 대체 발주 버튼을 눌러 SAP로 즉시 오더를 전송하세요.</div>
+                            ` : `
+                                <div class="text-emerald-400 text-sm font-bold animate-fade-in flex items-center justify-center">
+                                    <span class="mr-2 text-xl">✅</span> 대체 원자재 SAP 발주 코드 생성 완료
+                                </div>
+                                <div class="text-[10px] text-slate-400 mt-1">시스템 연계(2단계) 시나리오 데모가 종료되었습니다. 다음 Scene으로 이동하세요.</div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Action triggers Scene 1
+        function triggerScene1Step1() {
+            simState.scene1.step = 1; renderScene1();
+            setTimeout(() => { simState.scene1.step = 2; renderScene1(); }, 2500);
+        }
+        function triggerScene1Step3() {
+            simState.scene1.step = 3; renderScene1();
+        }
+
+        function renderScene2() {
+            const container = document.getElementById('scenario-viewer');
+            const state = simState.scene2;
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in h-full">
+                    <!-- Left console panel -->
+                    <div class="lg:col-span-5 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800/80 pb-6 lg:pb-0 lg:pr-6">
+                        <div>
+                            <div class="flex items-center space-x-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                                <span>Scene 2</span><span class="text-slate-600">•</span><span>비정형 데이터 자산화</span>
+                            </div>
+                            <h4 class="text-xl font-bold text-white mb-3">AI Vision OCR & GenAI Co-Pilot 연계</h4>
+                            <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                                협력사가 송부한 PDF 이미지 문서를 OCR 서버가 인식 후 JSON 구조화 데이터로 변환하고, LLM이 사내 법률 DB를 조회해 통관 이슈를 답변합니다.
+                            </p>
+                        </div>
+
+                        <!-- System Logs -->
+                        <div class="space-y-2 font-mono text-[11px] bg-slate-950 p-4 rounded-xl border border-slate-900 min-h-[140px]">
+                            <div class="flex justify-between text-slate-500 border-b border-slate-900 pb-1 mb-2">
+                                <span>OCR / LLM MODULE LOG</span>
+                                <span class="text-purple-400">STANDBY</span>
+                            </div>
+                            ${state.step >= 1 ? `
+                                <div class="text-slate-300 animate-fade-in"><span class="text-purple-400">[File Stream]</span> Invoice_AM.pdf 수신 완료</div>
+                                <div class="text-slate-300 animate-fade-in"><span class="text-indigo-400">[Vision AI]</span> 텍스트 레이아웃 바운딩 박스 파싱 중...</div>
+                            ` : '<div class="text-slate-600 text-center py-4">비정형 문서 수집 대기 중...</div>'}
+                            ${state.step >= 2 ? `
+                                <div class="text-emerald-400 font-semibold animate-fade-in"><span class="text-emerald-500">[NSP JSON Mapper]</span> 수량, 단가 구조화 테이블 DB Insert 성공</div>
+                            ` : ''}
+                            ${state.step === 3 ? `
+                                <div class="text-blue-400 font-semibold mt-2 border-t border-slate-800 pt-2 animate-fade-in"><span class="text-blue-500">[LLM Engine]</span> 질의 수신 및 RAG 벡터 검색 완료</div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Action Button -->
+                        <div class="mt-4">
+                            ${state.step === 0 ? `
+                                <button onclick="triggerScene2Step1()" class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs transition duration-200 shadow-md">
+                                    [1단계] 무역 송장(PDF) 업로드 및 OCR 파이프라인 가동
+                                </button>
+                            ` : state.step === 1 ? `
+                                <button disabled class="w-full py-3 bg-slate-800 text-slate-400 font-bold rounded-xl text-xs flex items-center justify-center space-x-2">
+                                    <svg class="animate-spin h-4 w-4 text-purple-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <span>비정형 이미지 딥러닝 픽셀 판독 중...</span>
+                                </button>
+                            ` : state.step === 2 ? `
+                                <button onclick="triggerScene2Step3()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition duration-200 shadow-md">
+                                    [2단계] GenAI Co-Pilot에 통관 규제 적합성 질의
+                                </button>
+                            ` : `
+                                <div class="bg-indigo-950/40 border border-indigo-500/30 text-indigo-300 px-4 py-3 rounded-xl flex items-center space-x-3 text-xs">
+                                    <span class="text-lg">🤖</span>
+                                    <div><div class="font-bold">Co-Pilot 가이드 답변 완료</div><div class="opacity-75 font-mono text-[10px]">사내 법률 DB (RAG) 참조 완료</div></div>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+
+                    <!-- Right visual mock panel -->
+                    <div class="lg:col-span-7 bg-slate-900 rounded-xl border border-slate-800 p-4 flex flex-col justify-between">
+                        
+                        <!-- Top Half: Architecture Flow -->
+                        <div class="flex-1 bg-slate-950 rounded-lg border border-slate-800/80 p-4 mb-4 relative flex items-center justify-center">
+                            <div class="text-[10px] text-slate-500 font-mono absolute top-2 left-3">OCR & LLM INTERFACE FLOW</div>
+                            
+                            <div class="flex justify-between items-center w-full px-4 mt-2">
+                                <div class="sys-node w-1/4">
+                                    <div class="text-xl mb-1">📄</div>
+                                    <div class="text-[10px] font-bold text-slate-300">비정형 PDF 문서</div>
+                                    <div class="text-[8px] text-slate-500 bg-slate-800 rounded mt-1">Local/Email</div>
+                                </div>
+
+                                <div class="flex flex-col w-1/5 items-center justify-center relative">
+                                    <div class="w-full flow-line-h">${state.step === 1 ? '<div class="packet packet-right packet-purple"></div>' : ''}</div>
+                                    <div class="absolute -top-4 text-[8px] text-purple-400 bg-purple-900/30 px-1 py-0.5 rounded">File Stream</div>
+                                </div>
+
+                                <div class="sys-node border-purple-500/50 bg-purple-950/30 w-1/4 shadow-lg shadow-purple-500/10">
+                                    <div class="text-[10px] font-bold text-purple-300 mb-1">NSP Vision OCR</div>
+                                    <div class="text-[8px] text-slate-400 bg-slate-900 rounded p-0.5">Image to JSON</div>
+                                </div>
+
+                                <div class="flex flex-col w-1/5 items-center justify-center relative">
+                                    <div class="w-full flow-line-h">${state.step === 2 ? '<div class="packet packet-right packet-emerald"></div>' : state.step === 3 ? '<div class="packet packet-right packet-blue"></div><div class="packet packet-left packet-blue"></div>' : ''}</div>
+                                    <div class="absolute -top-4 text-[8px] text-emerald-400 bg-emerald-900/30 px-1 py-0.5 rounded">${state.step === 3 ? 'RAG Query' : 'REST API'}</div>
+                                </div>
+
+                                <div class="sys-node w-1/4 flex flex-col gap-2">
+                                    <div class="border border-emerald-900 bg-emerald-950/20 rounded p-1">
+                                        <div class="text-[9px] font-bold text-emerald-400">SAP DB Insert</div>
+                                    </div>
+                                    <div class="border border-blue-900 bg-blue-950/20 rounded p-1">
+                                        <div class="text-[9px] font-bold text-blue-400">LLM Co-Pilot</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Half: Console View -->
+                        <div class="h-1/2 flex gap-3">
+                            <!-- Left: PDF Scan View -->
+                            <div class="w-1/2 bg-slate-950 rounded-lg p-3 border border-slate-800 relative overflow-hidden flex flex-col text-[9px] font-mono text-slate-400">
+                                <div class="text-slate-500 border-b border-slate-900 pb-1 mb-2">INVOICE_AM.PDF</div>
+                                ${state.step >= 1 ? `
+                                    ${state.step === 1 ? '<div class="absolute left-0 right-0 h-0.5 bg-purple-500 shadow-lg shadow-purple-500/80 scanning-line"></div>' : ''}
+                                    <div class="${state.step >= 2 ? 'text-emerald-400 bg-emerald-900/20' : ''} inline-block rounded">ITEM: CORE ALLOY-C</div>
+                                    <div class="${state.step >= 2 ? 'text-emerald-400 bg-emerald-900/20' : ''} inline-block rounded mt-1">QTY: 5,000 KG</div>
+                                    <div class="${state.step >= 2 ? 'text-emerald-400 bg-emerald-900/20' : ''} inline-block rounded mt-1">HS CODE: 8479.90</div>
+                                ` : '<div class="text-center py-6 text-slate-600 italic">문서 업로드 대기</div>'}
+                            </div>
+                            
+                            <!-- Right: Co-Pilot View -->
+                            <div class="w-1/2 bg-slate-950 rounded-lg p-3 border border-slate-800 flex flex-col text-[10px]">
+                                <div class="text-slate-500 border-b border-slate-900 pb-1 mb-2 font-mono">GEN-AI CO-PILOT CHAT</div>
+                                <div class="flex-1 overflow-y-auto space-y-2">
+                                    ${state.step >= 3 ? `
+                                        <div class="bg-slate-900/80 p-2 rounded text-slate-300">
+                                            <span class="font-bold text-slate-400">User:</span> 이 자재 HS Code(8479.90) 무관세 통관 가능?
+                                        </div>
+                                        <div class="bg-blue-950/40 p-2 rounded text-blue-200 border border-blue-900/50 animate-fade-in mt-2" style="animation-delay: 0.8s">
+                                            <span class="font-bold text-blue-400">Co-Pilot:</span> 네, 사내 최신 무역 법률 DB 대조 결과, 해당 부품은 2026년 개정안 기준 면세 대상입니다. 안심하고 발주 진행하셔도 좋습니다.
+                                        </div>
+                                    ` : '<div class="text-center py-6 text-slate-600 italic">질의 대기 중</div>'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Action triggers Scene 2
+        function triggerScene2Step1() {
+            simState.scene2.step = 1; renderScene2();
+            setTimeout(() => { simState.scene2.step = 2; renderScene2(); }, 2500);
+        }
+        function triggerScene2Step3() {
+            simState.scene2.step = 3; renderScene2();
+        }
+
+        function renderScene3() {
+            const container = document.getElementById('scenario-viewer');
+            const state = simState.scene3;
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in h-full">
+                    <!-- Left console panel -->
+                    <div class="lg:col-span-5 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800/80 pb-6 lg:pb-0 lg:pr-6">
+                        <div>
+                            <div class="flex items-center space-x-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                                <span>Scene 3</span><span class="text-slate-600">•</span><span>Edge IoT & 음성 지식화</span>
+                            </div>
+                            <h4 class="text-xl font-bold text-white mb-3">비정형 엣지 센서 수집 및 STT 작업 일지</h4>
+                            <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                                현장 Edge Device(음향 센서)의 MQTT 프로토콜 데이터를 실시간 분석해 예지보전을 수행하며, 조치 결과는 작업자의 음성(WebRTC)을 통해 MES에 자동 텍스트 기록됩니다.
+                            </p>
+                        </div>
+
+                        <!-- System Logs -->
+                        <div class="space-y-2 font-mono text-[11px] bg-slate-950 p-4 rounded-xl border border-slate-900 min-h-[140px]">
+                            <div class="flex justify-between text-slate-500 border-b border-slate-900 pb-1 mb-2">
+                                <span>EDGE IoT SENSOR LOG</span>
+                                <span class="text-amber-500">MONITORING</span>
+                            </div>
+                            ${state.step === 0 ? `
+                                <div class="text-slate-300"><span class="text-amber-400">[MQTT]</span> C-03 모터 진동/주파수 정상 수신 핑...</div>
+                            ` : state.step >= 1 ? `
+                                <div class="text-red-400 font-bold animate-fade-in"><span class="text-red-500">[Edge AI Alert]</span> 14,200Hz 비정상 마찰음 피크 감지!</div>
+                            ` : ''}
+                            ${state.step >= 2 ? `
+                                <div class="text-slate-300 animate-fade-in mt-2 border-t border-slate-800 pt-2"><span class="text-blue-400">[WebRTC Audio]</span> 모바일 마이크 음성 스트림 STT 변환 중...</div>
+                            ` : ''}
+                            ${state.step === 3 ? `
+                                <div class="text-emerald-400 font-semibold animate-fade-in"><span class="text-emerald-500">[MES API Insert]</span> 정비 작업 이력 DB 로깅 완료</div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Action Button -->
+                        <div class="mt-4">
+                            ${state.step === 0 ? `
+                                <button class="w-full py-3 bg-slate-800 text-slate-500 font-bold rounded-xl text-xs flex items-center justify-center space-x-2 cursor-not-allowed">
+                                    <span class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+                                    <span>현장 설비 센서 실시간 모니터링 중...</span>
+                                </button>
+                            ` : state.step === 1 ? `
+                                <button onclick="triggerScene3Step2()" class="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs transition duration-200 shadow-md animate-pulse">
+                                    [결함 감지] 현장 출동 및 정비 내역 STT(음성) 입력 가동
+                                </button>
+                            ` : state.step === 2 ? `
+                                <button disabled class="w-full py-3 bg-slate-800 text-blue-400 font-bold rounded-xl text-xs flex items-center justify-center space-x-2">
+                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full animate-ping"></span>
+                                    <span>작업자 음성 신경망 텍스트 번역 중...</span>
+                                </button>
+                            ` : `
+                                <div class="bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-xl flex items-center space-x-3 text-xs">
+                                    <span class="text-lg">⚙️</span>
+                                    <div><div class="font-bold">MES 점검 이력 데이터베이스 자동 기록</div><div class="opacity-75 font-mono text-[10px]">정상 반영: SYS_MES_PM_LOG</div></div>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+
+                    <!-- Right visual mock panel -->
+                    <div class="lg:col-span-7 bg-slate-900 rounded-xl border border-slate-800 p-4 flex flex-col justify-between">
+                        
+                        <!-- Top Half: Architecture Flow -->
+                        <div class="flex-1 bg-slate-950 rounded-lg border border-slate-800/80 p-4 mb-4 relative flex items-center justify-center">
+                            <div class="text-[10px] text-slate-500 font-mono absolute top-2 left-3">EDGE IoT & STT INTERFACE FLOW</div>
+                            
+                            <div class="flex justify-between items-center w-full px-2 mt-2">
+                                <!-- Edge Devices -->
+                                <div class="flex flex-col space-y-4 w-1/4">
+                                    <div class="sys-node relative border-amber-500/30 ${state.step === 1 ? 'border-red-500 bg-red-950/30' : ''}">
+                                        <div class="text-[10px] font-bold text-amber-400 mb-0.5">Acoustic Mic</div>
+                                        <div class="text-[9px] text-slate-400">설비 음향 수집</div>
+                                    </div>
+                                    <div class="sys-node relative ${state.step >= 2 ? 'border-blue-500 bg-blue-950/30' : ''}">
+                                        <div class="text-[10px] font-bold text-blue-400 mb-0.5">Mobile App</div>
+                                        <div class="text-[9px] text-slate-400">작업자 무전/음성</div>
+                                    </div>
+                                </div>
+
+                                <!-- Flow lines IN -->
+                                <div class="flex flex-col space-y-10 w-1/5 items-center justify-center relative">
+                                    <div class="w-full flow-line-h">
+                                        <div class="packet packet-right ${state.step === 1 ? 'packet-red' : 'packet-amber'}"></div>
+                                    </div>
+                                    <div class="absolute top-0 text-[8px] text-amber-500 bg-amber-900/30 px-1 py-0.5 rounded">MQTT</div>
+                                    
+                                    <div class="w-full flow-line-h">
+                                        ${state.step >= 2 ? '<div class="packet packet-right packet-blue"></div>' : ''}
+                                    </div>
+                                    <div class="absolute bottom-0 text-[8px] text-blue-500 bg-blue-900/30 px-1 py-0.5 rounded">WebRTC</div>
+                                </div>
+
+                                <!-- NSP HUB -->
+                                <div class="sys-node bg-slate-900 w-1/4 shadow-lg">
+                                    <div class="text-[10px] font-bold text-slate-300 mb-1 border-b border-slate-700 pb-1">NSP Edge Server</div>
+                                    <div class="text-[9px] text-slate-400">Anomaly Detection</div>
+                                    <div class="text-[9px] text-slate-400 mt-1">STT AI Engine</div>
+                                </div>
+
+                                <!-- Flow line OUT -->
+                                <div class="flex flex-col w-1/5 items-center justify-center relative">
+                                    <div class="w-full flow-line-h">${state.step === 3 ? '<div class="packet packet-right packet-emerald"></div>' : ''}</div>
+                                    <div class="absolute -top-4 text-[8px] text-emerald-500 bg-emerald-900/30 px-1 py-0.5 rounded">REST API</div>
+                                </div>
+
+                                <!-- Target -->
+                                <div class="sys-node w-1/4 ${state.step === 3 ? 'border-emerald-500' : ''}">
+                                    <div class="text-[10px] font-bold text-emerald-400 mb-0.5">MES DataDB</div>
+                                    <div class="text-[9px] text-slate-400">정비/보전 이력</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Half: Console View -->
+                        <div class="h-1/2 flex gap-3">
+                            <!-- Left: Acoustic Analyzer -->
+                            <div class="w-1/2 bg-slate-950 rounded-lg p-3 border ${state.step === 1 ? 'border-red-500/50' : 'border-slate-800'} flex flex-col justify-between">
+                                <div class="text-[9px] text-slate-500 font-mono">ACOUSTIC SOUND WAVE</div>
+                                <div class="flex items-end justify-center space-x-3 h-16">
+                                    <div class="w-3 rounded-t wave-bar ${state.step === 1 ? 'bg-red-500' : 'bg-emerald-500'}"></div>
+                                    <div class="w-3 rounded-t wave-bar ${state.step === 1 ? 'bg-red-400' : 'bg-emerald-400'}"></div>
+                                    <div class="w-3 rounded-t wave-bar ${state.step === 1 ? 'bg-red-600' : 'bg-emerald-500'}" style="animation-delay: 0.1s"></div>
+                                    <div class="w-3 rounded-t wave-bar ${state.step === 1 ? 'bg-red-400' : 'bg-emerald-400'}"></div>
+                                    <div class="w-3 rounded-t wave-bar ${state.step === 1 ? 'bg-red-500' : 'bg-emerald-500'}"></div>
+                                </div>
+                                <div class="text-center text-[9px] font-mono ${state.step === 1 ? 'text-red-400 animate-pulse' : 'text-slate-500'}">
+                                    ${state.step === 1 ? 'Warning: 14,200Hz Peak' : 'C-03 모터 소음 양호'}
+                                </div>
+                            </div>
+
+                            <!-- Right: STT Console -->
+                            <div class="w-1/2 bg-slate-950 rounded-lg p-3 border border-slate-800 flex flex-col">
+                                <span class="text-[9px] text-slate-500 font-mono block mb-2">STT TRANSLATION CONSOLE</span>
+                                <div class="bg-slate-900/50 p-2.5 rounded border border-slate-800/80 flex-1 flex items-center">
+                                    ${state.step === 0 || state.step === 1 ? `
+                                        <p class="text-slate-600 text-xs italic">현장 작업자의 음성 데이터 전송 대기 중...</p>
+                                    ` : state.step === 2 ? `
+                                        <p class="text-blue-300 text-xs italic font-mono flex items-center">
+                                            <span class="animate-ping mr-2 text-blue-500">●</span> "${state.text}"
+                                        </p>
+                                    ` : `
+                                        <div class="text-emerald-400 text-[10px]">
+                                            <div class="font-semibold mb-1">✔ MES DB 텍스트 이력 저장 완료</div>
+                                            <span class="text-slate-300 block">"C라인 3번 모터 베어링 교체 완료 및 정상 가동 확인"</span>
+                                        </div>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Action triggers Scene 3
+        function triggerScene3Step2() {
+            simState.scene3.step = 2;
+            simState.scene3.text = "";
+            renderScene3();
+
+            const fullText = "C라인 3번 모터 베어링 교체 완료 및 정상 가동 확인";
+            let currentIdx = 0;
+
+            const typingInterval = setInterval(() => {
+                if (currentIdx < fullText.length) {
+                    simState.scene3.text += fullText.charAt(currentIdx);
+                    currentIdx++;
+                    renderScene3();
+                } else {
+                    clearInterval(typingInterval);
+                    setTimeout(() => {
+                        simState.scene3.step = 3;
+                        renderScene3();
+                    }, 500);
+                }
+            }, 80);
+        }
+
+        function renderScenario() {
+            const progress = document.getElementById('scenario-progress').children;
+
+            // Sync dots highlight
+            Array.from(progress).forEach((dot, i) => {
+                dot.className = i === currentScenarioIdx ? "w-8 h-1.5 rounded-full bg-indigo-500 transition-all duration-300" : "w-8 h-1.5 rounded-full bg-slate-700 transition-all duration-300";
+            });
+
+            // Route scene draw and reset local states on scene switch
+            if (currentScenarioIdx === 0) {
+                simState.scene1.step = 0; 
+                renderScene1();
+            } else if (currentScenarioIdx === 1) {
+                simState.scene2.step = 0; 
+                renderScene2();
+            } else if (currentScenarioIdx === 2) {
+                simState.scene3.step = 0;
+                renderScene3();
+                // Auto trigger anomaly after 1.5s in Scene 3
+                setTimeout(() => {
+                    if (currentScenarioIdx === 2 && simState.scene3.step === 0) {
+                        simState.scene3.step = 1;
+                        renderScene3();
+                    }
+                }, 1500);
+            }
+        }
+
+        function nextScenario() {
+            currentScenarioIdx = (currentScenarioIdx + 1) % 3;
+            renderScenario();
+        }
+
+        function prevScenario() {
+            currentScenarioIdx = (currentScenarioIdx - 1 + 3) % 3;
+            renderScenario();
+        }
+
+        function initCharts() {
+            const ctx = document.getElementById('kpiChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['생산성 향상', '설비 가동률', '자재 결품률', '보고서 공수'],
+                    datasets: [
+                        {
+                            label: '도입 전 (%)',
+                            data: [65, 82, 12, 100],
+                            backgroundColor: 'rgba(203, 213, 225, 0.6)',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'NSP 도입 후 (%)',
+                            data: [98, 92, 0.5, 30],
+                            backgroundColor: 'rgba(79, 70, 229, 0.9)',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 11, weight: '600' }
+                            }
+                        },
+                        tooltip: {
+                            padding: 12,
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 12 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 120,
+                            ticks: { font: { size: 10 }, color: '#94a3b8' },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            ticks: { font: { size: 11, weight: '600' }, color: '#475569' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.onload = () => {
+            switchTab('poc');
+            renderScenario();
+            initCharts();
+        };
+    </script>
+</body>
+</html>
